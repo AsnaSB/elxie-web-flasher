@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- TODO: Replace with official ELXIE favicon -->
+  <rect width="64" height="64" rx="16" fill="#0c4a6e"/>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#090d16" stroke="#0ea5e9" stroke-width="2"/>
+  <rect x="12" y="16" width="40" height="24" rx="6" fill="#031d2e" stroke="#00f5d4" stroke-width="2"/>
+  <!-- Digital Eyes -->
+  <circle cx="24" cy="28" r="4" fill="#00f5d4"/>
+  <circle cx="40" cy="28" r="4" fill="#00f5d4"/>
+  <!-- Wheels -->
+  <rect x="8" y="44" width="12" height="6" rx="3" fill="#38bdf8"/>
+  <rect x="44" y="44" width="12" height="6" rx="3" fill="#38bdf8"/>
+  <!-- Antenna -->
+  <path d="M32 16V8M32 8L36 6M32 8L28 6" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="32" cy="6" r="2.5" fill="#fee440"/>
+</svg>

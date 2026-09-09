@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" fill="none">
+  <!-- TODO: Replace placeholder logo with official ELXIE brand logo asset -->
+  <!-- Tech Glyph / Robot icon -->
+  <g transform="translate(4, 8)">
+    <rect width="44" height="44" rx="12" fill="#0c4a6e" fill-opacity="0.3"/>
+    <rect width="44" height="44" rx="12" stroke="#0ea5e9" stroke-width="2"/>
+    <rect x="8" y="12" width="28" height="18" rx="5" fill="#041b2a" stroke="#00f5d4" stroke-width="1.5"/>
+    <circle cx="16" cy="21" r="2.5" fill="#00f5d4"/>
+    <circle cx="28" cy="21" r="2.5" fill="#00f5d4"/>
+    <line x1="16" y1="36" x2="28" y2="36" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <!-- Brand Text -->
+  <text x="60" y="40" font-family="'Space Grotesk', system-ui, sans-serif" font-size="32" font-weight="800" fill="#f8fafc" letter-spacing="1">ELXIE</text>
+  <!-- Accent Dot -->
+  <circle cx="162" cy="22" r="3.5" fill="#00f5d4"/>
+  <!-- Subtitle Tag -->
+  <text x="174" y="24" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="600" fill="#38bdf8" letter-spacing="1.5">ROBOTICS</text>
+</svg>

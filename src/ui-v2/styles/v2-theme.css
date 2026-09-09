@@ -1,0 +1,79 @@
+/* ==========================================================================
+   ELXIE Web Flasher — #040714 Futuristic Navy Theme & Styles
+   ========================================================================== */
+
+:root {
+  --elxie-bg-dark: #040714;
+  --elxie-bg-space: #070c1e;
+  --elxie-cyan: #00e5ff;
+  --elxie-cyan-glow: #00f5d4;
+  --elxie-blue-glow: #0ea5e9;
+  --elxie-purple-accent: #7b7cff;
+}
+
+/* Base Reference Universe Background */
+.v2-bg-universe {
+  background-color: var(--elxie-bg-dark);
+  color: #f8fafc;
+  min-height: 100vh;
+}
+
+/* Glassmorphism Panel matching reference image */
+.ref-glass-card {
+  background: rgba(8, 14, 28, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.7), inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.ref-glass-card-hover {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ref-glass-card-hover:hover {
+  background: rgba(12, 22, 44, 0.85);
+  border-color: rgba(0, 229, 255, 0.4);
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.8), 0 0 25px 0 rgba(0, 245, 212, 0.15);
+  transform: translateY(-2px);
+}
+
+.ref-glass-pill {
+  background: rgba(10, 18, 36, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+}
+
+/* Glowing Button Gradient */
+.ref-btn-primary {
+  background: linear-gradient(135deg, #00e5ff 0%, #00b0ff 50%, #7c4dff 100%);
+  box-shadow: 0 0 28px rgba(0, 229, 255, 0.4), 0 8px 20px rgba(124, 77, 255, 0.25);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ref-btn-primary:hover {
+  background: linear-gradient(135deg, #18ffff 0%, #40c4ff 50%, #b388ff 100%);
+  box-shadow: 0 0 36px rgba(0, 229, 255, 0.6), 0 10px 28px rgba(124, 77, 255, 0.35);
+  transform: translateY(-2px) scale(1.01);
+}
+
+/* Natural Eye Blink Animation */
+@keyframes blink-animation {
+  0%, 45%, 55%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.08);
+  }
+}
+
+.animate-blink {
+  animation: blink-animation 4.5s ease-in-out infinite;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-blink {
+    animation: none !important;
+  }
+}
