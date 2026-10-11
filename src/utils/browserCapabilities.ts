@@ -89,8 +89,14 @@ export function getDeviceCapabilities(
   const isMac = !isMobile && (uaLower.includes('macintosh') || platform.toLowerCase().includes('mac'));
   const isLinux = !isMobile && !isWindows && !isMac && (uaLower.includes('linux') || platform.toLowerCase().includes('linux'));
 
-  const supportsWebSerial = Boolean(nav && 'serial' in nav && (nav as { serial?: unknown }).serial !== undefined);
-  const supportsWebUSB = Boolean(nav && 'usb' in nav && (nav as { usb?: unknown }).usb !== undefined);
+  const supportsWebSerial =
+    typeof (nav as { serial?: { requestPort?: unknown } } | undefined)
+      ?.serial?.requestPort === 'function';
+
+  const supportsWebUSB =
+    typeof (nav as { usb?: { requestDevice?: unknown } } | undefined)
+      ?.usb?.requestDevice === 'function';
+
   const canFlashDirectly = supportsWebSerial;
 
   const browserName = detectBrowserName(ua);

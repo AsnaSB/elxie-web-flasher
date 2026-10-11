@@ -70,18 +70,42 @@ export class ElxieDeviceTransport implements DeviceTransport {
 
     try {
       // 1. Request port selection from user
+
       let port: unknown;
+
       try {
-        // @ts-expect-error - Web Serial API
-        port = await navigator.serial.requestPort({ filters: USB_SERIAL_FILTERS });
+        logger.info('[USB DEBUG] Requesting serial port with ESP32 filters', {
+          filters: USB_SERIAL_FILTERS,
+          userAgent: navigator.userAgent,
+          secureContext: window.isSecureContext,
+          hasSerial: 'serial' in navigator,
+          hasUSB: 'usb' in navigator,
+        });
+
+        // @ts-expect-error - Web Serial API is not included in current Navigator typings
+        port = await navigator.serial.requestPort({
+          filters: USB_SERIAL_FILTERS,
+        });
+
+        logger.info('[USB DEBUG] Serial port selected successfully');
       } catch (filterErr: unknown) {
         const error = filterErr as Error;
+
+        logger.error('[USB DEBUG] Serial port request failed', {
+          name: error.name,
+          message: error.message,
+        });
+
         if (error.name === 'NotFoundError') {
           throw error;
         }
-        // Fallback to open port selector without filters
-        // @ts-expect-error - Web Serial API
+
+        logger.info('[USB DEBUG] Retrying serial port request without filters');
+
+        // @ts-expect-error - Web Serial API is not included in current Navigator typings
         port = await navigator.serial.requestPort();
+
+        logger.info('[USB DEBUG] Serial port selected successfully on fallback');
       }
 
       // 2. Initialize Espressif Serial Transport
