@@ -97,7 +97,13 @@ export class ElxieDeviceTransport implements DeviceTransport {
         });
 
         if (error.name === 'NotFoundError') {
-          throw error;
+          logger.info(
+            '[USB DEBUG] No device matched the filters; retrying without filters'
+          );
+        } else {
+          logger.info(
+            '[USB DEBUG] Filtered request failed; retrying without filters'
+          );
         }
 
         logger.info('[USB DEBUG] Retrying serial port request without filters');
