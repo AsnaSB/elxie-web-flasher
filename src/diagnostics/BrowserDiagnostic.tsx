@@ -1,4 +1,4 @@
-
+import UsbChooserDiagnostic from './UsbChooserDiagnostic';
 import { useEffect, useState } from 'react';
 
 interface UsbDeviceInfo {
@@ -127,7 +127,14 @@ export default function BrowserDiagnostic() {
           <strong>{label}:</strong> {value ? 'YES' : 'NO'}
         </p>
       ))}
+    <UsbChooserDiagnostic />
 
+        <details>
+        <summary>Browser details</summary>
+        <pre style={{ whiteSpace: 'pre-wrap' }}>
+            {result.userAgent}
+        </pre>
+        </details>
       <button
         type="button"
         onClick={checkUsbDevices}
