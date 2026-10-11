@@ -14,6 +14,7 @@ import { Recovery } from './pages/Recovery';
 import { DeviceSetupGuide } from './pages/DeviceSetupGuide';
 import { AppV2 } from './ui-v2/AppV2';
 import { Layers } from 'lucide-react';
+import BrowserDiagnostic from './diagnostics/BrowserDiagnostic';
 
 interface VersionSwitchProps {
   uiVersion: 'v1' | 'v2';
@@ -131,9 +132,10 @@ export const App: React.FC = () => {
   return (
     <FlasherProvider>
       <RootAppController />
+      <BrowserDiagnostic />
     </FlasherProvider>
   );
 };
-
+   
 export default App;
 
