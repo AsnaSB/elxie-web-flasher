@@ -1,256 +1,233 @@
 # ELXIE Web Flasher
 
-> Official browser-based wired firmware installer for the **ELXIE** educational robotic car platform.
+A browser-based firmware flashing interface for the **ELXIE educational robotic car**, built with React, TypeScript, and Vite. The current website uses the redesigned **V2 interface** and separates the UI, firmware handling, device transport, and workflow state.
 
-![ELXIE Robotics](public/assets/robot/elxie-robot.svg)
+![ELXIE robot — current website artwork](public/assets/robot/elxie-robot.svg)
 
----
+> **Hardware status:** The application includes a Web Serial implementation for ESP32-S3 hardware and browser diagnostics for Web Serial/WebUSB capabilities. Successful physical flashing depends on the device, USB connection, bootloader communication, firmware image, and configuration. Android WebUSB detection and the complete Android flashing workflow should be verified separately.
 
-## 1. Project Overview
+## Features
 
-The **ELXIE Web Flasher** allows students, educators, and makers to update and restore their ELXIE robots directly from modern web browsers over a single USB cable connection.
+- **V2 user interface:** landing, connection, device setup, firmware selection, flashing, success, and recovery screens.
+- **Animated ELXIE robot:** current robot artwork with an interactive facial-display overlay.
+- **Firmware handling:** built-in test firmware entries, manifest validation, version utilities, and support for loading a local `.bin` file.
+- **Hardware abstraction:** shared transport interface, real ESP32-S3 transport, and a mock transport for simulated workflows.
+- **Web Serial integration:** the real-hardware transport uses `esptool-js` to communicate with the ESP32-S3 ROM bootloader through a serial port.
+- **Browser diagnostics:** checks browser capabilities and helps inspect USB/Serial chooser behavior.
+- **Developer diagnostics:** logging and a diagnostics interface for investigating connection and flashing problems.
+- **Automated tests:** Vitest tests for firmware validation, manifests, transport behavior, browser capabilities, state transitions, and version utilities.
 
-The application adheres to a strict Hardware Abstraction Layer (HAL) and centralized firmware manifest design. It is built to provide an approachable, friendly, and robust experience without exposing complex low-level serial parameters or technical repository structures to end users.
+## How it works
 
----
-
-## 2. Key Features
-
-- 🚗 **Car-Like Animated Robot Character**: An interactive SVG representation of ELXIE with an emotive OLED digital face screen that dynamically reacts to update stages (`friendly`, `curious`, `happy`, `focused`, `working`, `thinking`, `waiting`, `excited`, `concerned`).
-- ⚡ **Wired Hardware Abstraction**: Clean separation between UI layers and underlying browser hardware APIs (Web Serial / WebUSB / DFU / UF2).
-- 🔄 **Safe Update Lifecycle**: End-to-end multi-stage pipeline:
-  `Connect` ➔ `Detect` ➔ `Check Version` ➔ `Select` ➔ `Prepare` ➔ `Download` ➔ `Flash` ➔ `Verify` ➔ `Restart` ➔ `Confirm`.
-- 🛡️ **Empathetic Error Recovery**: Clear, actionable error cards (Cable Disconnected, Permission Denied, Incompatible Firmware, Checksum Mismatch) with one-click recovery paths.
-- 🧪 **Full Demo Simulator**: Out-of-the-box virtual device testing (`VITE_DEMO_MODE=true`) with realistic timing, stage callbacks, and diagnostic fault injections.
-- 🔍 **Developer Diagnostic Panel**: Embedded inspection panel displaying live state variables, memory logs, and simulation triggers.
-- ♿ **Accessibility & Motion First**: Semantic markup, keyboard navigation, focus rings, and full `prefers-reduced-motion` compliance.
-
----
-
-## 3. Architecture
-
+```text
+Browser (ELXIE Web Flasher)
+          |
+          v
+V2 interface and shared workflow state
+          |
+          v
+Firmware service and validation
+          |
+          v
+Flasher
+          |
+          v
+Device transport
+    |             |
+    |             +--> Mock transport (simulation)
+    |
+    +--> Web Serial + esptool-js
+                    |
+                    v
+                USB connection
+                    |
+                    v
+               ESP32-S3 bootloader
+                    |
+                    v
+               Device flash memory
 ```
+
+The website can serve firmware files from `public/firmware/`. In real-hardware mode, the firmware service fetches the selected binary and the transport attempts to flash it. A successful page load, USB chooser appearance, or simulated progress display does **not** by itself prove that a physical device was flashed successfully.
+
+## Technology stack
+
+- React 18
+- TypeScript
+- Vite
+- Tailwind CSS
+- `esptool-js` for ESP32 serial flashing
+- Vitest for automated tests
+- Browser Web Serial API; WebUSB is also inspected by the browser diagnostics
+
+## Project structure
+
+```text
 elxie-web-flasher/
 ├── public/
 │   ├── assets/
-│   │   ├── logo/elxie-logo.svg       # Brand SVG logo
-│   │   └── robot/elxie-robot.svg     # Car-like robot illustration
-│   └── favicon.svg                   # Browser favicon
+│   │   ├── background/
+│   │   ├── logo/
+│   │   └── robot/
+│   ├── firmware/
+│   │   ├── standalone_led_test.bin
+│   │   ├── v1_green.bin
+│   │   ├── v2_blue.bin
+│   │   └── v3_red.bin
+│   └── favicon.svg
 ├── src/
-│   ├── components/                   # Reusable UI & presentation widgets
-│   │   ├── ConnectionCard.tsx        # USB connect instructions & trigger
-│   │   ├── DebugPanel.tsx            # Floating developer diagnostic panel
-│   │   ├── DeviceStatus.tsx          # Connected robot status summary
-│   │   ├── ElxieLogo.tsx             # Brand header logo
-│   │   ├── ElxieRobot.tsx            # Animated robotic vehicle visual
-│   │   ├── ErrorCard.tsx             # Error and recovery guidance
-│   │   ├── FirmwareCard.tsx          # Single release row item
-│   │   ├── Footer.tsx                # Accessible footer
-│   │   ├── Header.tsx                # Top nav with demo & debug toggles
-│   │   ├── ProgressBar.tsx           # Multi-stage and percentage bar
-│   │   ├── RobotFace.tsx             # Dynamic OLED facial expressions
-│   │   ├── SuccessCard.tsx           # Update completion celebration
-│   │   ├── UpdateStages.tsx          # Step checklist progression
-│   │   └── VersionSelector.tsx       # Version picker with channel tabs
-│   ├── firmware/                     # Firmware retrieval & validation layer
-│   │   ├── firmwareConfig.ts         # Centralized endpoints & placeholders
-│   │   ├── FirmwareManifest.ts       # Manifest schema & JSON validation
-│   │   ├── FirmwareService.ts        # Download, chunking, and verification
-│   │   └── VersionComparator.ts      # Semver sorting & channel filtering
-│   ├── hardware/                     # Hardware Abstraction Layer (HAL)
-│   │   ├── DeviceManager.ts          # Connection lifecycle & cable events
-│   │   ├── DeviceTransport.ts        # HAL interface definitions
-│   │   ├── ElxieDeviceTransport.ts   # Real hardware implementation (Placeholders)
-│   │   ├── Flasher.ts                # Update process orchestrator
-│   │   └── MockDeviceTransport.ts    # Virtual demo device simulator
-│   ├── pages/                        # Screen state views
-│   │   ├── Connect.tsx
-│   │   ├── Device.tsx
-│   │   ├── Firmware.tsx
-│   │   ├── Flashing.tsx
-│   │   ├── Landing.tsx
-│   │   ├── Recovery.tsx
-│   │   ├── Success.tsx
-│   │   └── Update.tsx
-│   ├── state/
-│   │   └── flasherStore.ts           # Centralized React state machine
-│   ├── styles/
-│   │   └── globals.css               # Design tokens, cyber glow, OLED styles
-│   ├── utils/
-│   │   ├── errors.ts                 # Typed errors & friendly recovery copy
-│   │   ├── format.ts                 # Byte and date formatters
-│   │   ├── logger.ts                 # In-memory diagnostic ring buffer
-│   │   └── version.ts                # Semantic version parser & comparator
-│   ├── App.tsx                       # Root view orchestrator
-│   └── main.tsx                      # React DOM mount
-├── tests/                            # Automated Vitest test suite
-│   ├── manifest.test.ts
-│   ├── mockTransport.test.ts
-│   ├── stateMachine.test.ts
-│   └── version.test.ts
-├── .env.example
+│   ├── assets/robot/
+│   │   └── elxie-robot.png
+│   ├── components/          # Original/reusable UI components
+│   ├── diagnostics/         # Browser and USB chooser diagnostics
+│   ├── firmware/            # Manifest, binary retrieval, validation
+│   ├── hardware/            # Device transports and flashing orchestration
+│   ├── pages/               # Original interface pages
+│   ├── state/               # Shared flasher workflow state
+│   ├── styles/              # Global styles
+│   ├── ui-v2/
+│   │   ├── components/      # Current V2 UI components
+│   │   ├── pages/           # Current V2 workflow screens
+│   │   └── styles/
+│   ├── utils/               # Capabilities, errors, logging, formatting
+│   ├── App.tsx              # Application entry/controller
+│   └── main.tsx             # React mount point
+├── tests/
+├── docs/
 ├── package.json
-├── tailwind.config.js
+├── package-lock.json
 ├── tsconfig.json
 └── vite.config.ts
 ```
 
----
+### Key modules
 
-## 4. Installation
+| File | Responsibility |
+|---|---|
+| `src/App.tsx` | Root controller; currently defaults to V2 while retaining V1 switching logic. |
+| `src/ui-v2/AppV2.tsx` | Coordinates the redesigned V2 screens and components. |
+| `src/state/flasherStore.tsx` | Shared workflow and application state. |
+| `src/firmware/FirmwareService.ts` | Retrieves firmware entries and downloads/processes binary data. |
+| `src/firmware/FirmwareManifest.ts` | Firmware manifest types and validation. |
+| `src/firmware/FirmwareValidator.ts` | Validates firmware binary data and extracts supported metadata. |
+| `src/hardware/DeviceTransport.ts` | Contract shared by hardware transport implementations. |
+| `src/hardware/ElxieDeviceTransport.ts` | Real-hardware Web Serial transport using `esptool-js`. |
+| `src/hardware/Flasher.ts` | Coordinates the firmware update process. |
+| `src/hardware/MockDeviceTransport.ts` | Simulates a device for demo/testing workflows. |
+| `src/diagnostics/BrowserDiagnostic.tsx` | Displays browser capability information. |
+| `src/diagnostics/UsbChooserDiagnostic.tsx` | Helps diagnose browser USB and Serial device selection. |
 
-Ensure **Node.js 18+** and **npm** are installed.
+## Requirements
+
+- Node.js and npm
+- A recent Chromium-based browser for hardware APIs
+- For physical flashing: a compatible USB data connection, supported device interface, correct firmware image, and ESP32-S3 bootloader communication
+
+Browser support varies by API, operating system, and device. Web Serial and WebUSB are separate APIs with different permissions and transport behavior. Firefox and Safari should not be assumed to support the hardware workflow. Demo mode can be used without a physical robot.
+
+## Run locally
+
+Clone the repository and enter the project directory:
 
 ```bash
-# Clone the repository and enter the directory
+git clone https://github.com/AsnaSB/elxie-web-flasher.git
 cd elxie-web-flasher
-
-# Install dependencies
 npm install
-```
-
----
-
-## 5. Development
-
-Start the local Vite development server:
-
-```bash
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+Open the local URL printed by Vite (normally `http://localhost:5173`).
 
-By default, `VITE_DEMO_MODE=true` is enabled, allowing instant testing of the entire user journey without physical hardware.
+For access from another device on the same network, Vite may need to be started with a host binding, and the firewall/network must allow access. **Local-network access alone does not grant USB permissions or guarantee that mobile hardware flashing works.** Web hardware APIs also require a supported browser and an appropriate secure context.
 
----
+## Demo mode and real hardware
 
-## 6. Running Tests & Production Build
+The application supports a mock transport and a real-hardware transport. Check the current environment configuration and application state before testing; do not assume a successful demo run is a real flash.
 
-### Run Unit & Integration Tests
+| Mode | Behavior |
+|---|---|
+| Demo / mock | Uses simulated device behavior and mock firmware data for exercising the UI and workflow. No physical firmware write is proven by this mode. |
+| Real hardware | Uses the real device transport. The current `ElxieDeviceTransport.ts` implementation uses Web Serial and `esptool-js` to request a serial port and attempt an ESP32-S3 bootloader handshake and flash operation. |
+
+Use the project's current `.env.example` and configuration files to determine the supported environment variable names and defaults. Do not publish secrets in environment files.
+
+## Firmware files
+
+The repository includes these public firmware assets:
+
+- `public/firmware/standalone_led_test.bin`
+- `public/firmware/v1_green.bin`
+- `public/firmware/v2_blue.bin`
+- `public/firmware/v3_red.bin`
+
+The firmware service currently contains entries that reference these paths. The `.bin` files are compiled firmware images; related source projects are maintained separately under the root `firmware/` directory.
+
+**Before flashing hardware**, confirm that the selected binary matches the target board and intended firmware build, and verify its flash layout/address and other hardware-specific requirements. Do not infer compatibility from a filename alone.
+
+## Android / WebUSB status
+
+The project includes browser diagnostics for Web Serial and WebUSB capability and device selection. The current real-hardware transport imports `esptool-js` and uses **Web Serial**. WebUSB chooser detection by itself is not the same as a complete WebUSB flashing transport.
+
+For Android testing, verify each stage separately:
+
+1. The phone supports USB OTG/host mode and the cable carries data.
+2. The browser can see and let the user select the ESP32-S3 device.
+3. The application opens the required interface and establishes bootloader communication.
+4. Firmware transfer and verification complete on the physical board.
+
+Do not report mobile flashing as working until the complete physical-hardware sequence has been tested successfully.
+
+## Tests and production build
+
+Run the automated tests:
+
 ```bash
-npm run test
+npm test
 ```
 
-### Build Production Bundle
+Run TypeScript checking:
+
+```bash
+npx tsc --noEmit
+```
+
+Create the production build:
+
 ```bash
 npm run build
 ```
 
-The compiled assets will be placed in the `dist/` directory, ready for hosting on any static web server (GitHub Pages, Cloudflare Pages, Firebase Hosting, Nginx, etc.).
+Vite writes the production bundle to `dist/`. Test results and build output should be checked after changes rather than assumed.
 
----
+## Troubleshooting
 
-## 7. Demo Mode vs. Real Hardware Mode
+### The device does not appear in the browser chooser
 
-The application supports dual operating modes via dependency injection:
+- Use a USB cable that supports data, not charging only.
+- Confirm the robot is powered and the phone/laptop is acting as the USB host.
+- Close other applications that may have the serial port open.
+- Check browser support and the diagnostic panel.
+- For ESP32 bootloader synchronization failures, follow the board-specific BOOT/RESET procedure documented by the hardware team.
 
-| Mode | Trigger | Behavior |
-| :--- | :--- | :--- |
-| **Demo Mode** | `VITE_DEMO_MODE=true` or Top Header Badge | Connects to `MockDeviceTransport`. Simulates realistic stage timing, byte progress, and allows injecting cable disconnects or verify errors via the debug panel. |
-| **Real Hardware Mode** | `VITE_DEMO_MODE=false` or Top Header Badge | Connects to `ElxieDeviceTransport`. Requests browser device permissions and communicates directly with physical ELXIE robotic hardware. |
+### The website opens on Android but cannot connect
 
----
+A page loading successfully only proves network access. Check OTG/host detection, the USB cable/adapter, browser chooser selection, and the actual transport implementation separately. Web Serial and WebUSB are not interchangeable.
 
-## 8. Browser Requirements
+### The progress indicator completes but the robot does not change
 
-Physical hardware communication requires a browser with Web Hardware API support:
+Confirm that demo mode is disabled for the hardware test, that the selected firmware was actually downloaded, that the bootloader handshake succeeded, and that the correct binary and flash address were used. A simulated progress sequence is not evidence of a physical firmware write.
 
-- **Supported (Desktop Recommended)**:
-  - Google Chrome (v89+)
-  - Microsoft Edge (v89+)
-  - Opera (v75+)
-  - Brave (v1.22+)
-- **Not Supported for Physical Hardware**:
-  - Mozilla Firefox *(Mozilla has declined Web Serial/WebUSB support on security grounds)*
-  - Apple Safari (macOS / iOS)
+### Firmware download fails
 
-*Note: In unsupported browsers, Demo Mode remains fully functional.*
+Check the selected firmware URL, whether the file exists under `public/firmware/`, and the browser console/network response. Verify manifest configuration if a remote manifest is used.
 
----
+## Deployment
 
-## 9. Firmware Integration
+The project is configured as a Vite static web application and includes GitHub Pages deployment workflow configuration. A production deployment should be made only after tests and the production build pass. Confirm the configured Vite base path and deployment workflow when changing hosting settings.
 
-Firmware manifests are served as structured JSON files. Normal users never see repository links or raw artifact paths.
+Live website: https://asnasb.github.io/elxie-web-flasher/  
+Repository: https://github.com/AsnaSB/elxie-web-flasher
 
-### Manifest Schema Format:
-```json
-{
-  "schemaVersion": "1.0",
-  "deviceFamily": "ELXIE",
-  "latest": "v1.3.0",
-  "versions": [
-    {
-      "version": "v1.3.0",
-      "releaseDate": "2026-07-20",
-      "description": "Recommended release with improved motor control and OLED facial expressions.",
-      "downloadUrl": "https://releases.elxie.local/firmware/elxie-v1.3.0.bin",
-      "checksum": "sha256:4a8e5f21c9b3e71d8820f66e319b22a07c11f42d",
-      "fileSize": 524288,
-      "recommended": true,
-      "channel": "stable",
-      "highlights": [
-        "Enhanced expressive OLED digital face animations",
-        "Smoother dual-motor speed ramping"
-      ]
-    }
-  ]
-}
-```
+## License
 
----
-
-## 10. Placeholders That Must Be Replaced (`XXXXXX`)
-
-As the embedded hardware flashing specifications and official cloud distribution endpoints are pending confirmation from the hardware engineering team, several architectural placeholders are marked with `XXXXXX`.
-
-Here is the exact registry of all placeholders:
-
-| # | Placeholder | File Location | Required Value | Source / Team Responsible | Required for Real Flashing |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **1** | `VITE_FIRMWARE_REPOSITORY` | `.env.example`, `src/firmware/firmwareConfig.ts` | Official ELXIE firmware distribution repository URL | DevOps / Infrastructure Team | No (Internal reference) |
-| **2** | `VITE_FIRMWARE_MANIFEST` | `.env.example`, `src/firmware/firmwareConfig.ts` | Public URL to the official JSON `manifest.json` | Cloud / Release Engineering | **Yes** |
-| **3** | `VITE_FLASH_PROTOCOL` | `.env.example`, `src/hardware/ElxieDeviceTransport.ts` | Confirmed browser transport identifier (e.g. `'web-serial'`, `'web-usb'`) | Embedded Hardware Team | **Yes** |
-| **4** | `ELXIE_USB_VID` / `ELXIE_USB_PID` | `src/hardware/ElxieDeviceTransport.ts` | Official USB Vendor ID (VID) and Product ID (PID) hex values | Hardware Team | **Yes** |
-| **5** | `ELXIE_BAUD_RATE` | `src/hardware/ElxieDeviceTransport.ts` | Flashing communication speed (e.g. `115200` or `921600`) | Embedded Firmware Team | **Yes** |
-| **6** | `ELXIE_FLASH_BASE_ADDRESS` | `src/hardware/ElxieDeviceTransport.ts` | Base flash memory offset (e.g. `0x0000` or `0x10000`) | Embedded Firmware Team | **Yes** |
-| **7** | `ELXIE_DEFAULT_PROFILE` | `src/hardware/DeviceTransport.ts` | Complete hardware revision configuration profile | Hardware Engineering | **Yes** |
-| **8** | Official Logo & Robot Artwork | `public/assets/`, `src/components/ElxieLogo.tsx`, `src/components/ElxieRobot.tsx` | High-resolution production vector SVG assets for ELXIE brand | Product Design Team | No (Placeholders present) |
-
----
-
-## 11. Instructions for Replacing Placeholders
-
-### To Connect to Real ELXIE Hardware:
-1. Open `.env` and set:
-   ```env
-   VITE_DEMO_MODE=false
-   VITE_FIRMWARE_MANIFEST=https://updates.elxie.io/manifest.json
-   VITE_FLASH_PROTOCOL=web-serial
-   ```
-2. Open [`src/hardware/ElxieDeviceTransport.ts`](src/hardware/ElxieDeviceTransport.ts) and set the USB filters and flashing driver:
-   ```ts
-   export const ELXIE_TRANSPORT = "web-serial";
-   export const ELXIE_USB_VID = 0x303A; // Replace with actual VID
-   export const ELXIE_USB_PID = 0x1001; // Replace with actual PID
-   ```
-3. Implement the `flashFirmware` method in `ElxieDeviceTransport.ts` using the chosen flashing library (e.g. `esptool-js`, `@webusb/dfu`, or custom transport).
-
----
-
-## 12. Troubleshooting & Recovery Guide
-
-- **Robot not detected when clicking Connect**:
-  - Check that the USB cable supports data (not a charge-only cable).
-  - Verify ELXIE's power switch is in the **ON** position.
-  - In Linux, ensure the user has permissions to access the serial/USB port (`dialout` group).
-- **Update Interrupted / Disconnected**:
-  - Click **Reconnect ELXIE** on the recovery screen without refreshing the browser.
-- **Verification Failed**:
-  - Click **Retry Installation** to safely re-write the firmware block.
-
----
-
-## 13. License
-
-ELXIE Educational Platform © 2026. All rights reserved.
+Check the repository's license and project ownership terms before redistributing this application or its firmware assets.
